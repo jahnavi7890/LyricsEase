@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multilingual Lyrics Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        /* Light Mode (Default) */
+        body.light {
+            background: #f8fafc;
+            color: #2d3748;
+        }
+
+        /* Dark Mode */
+        body.dark {
+            background: #1a202c;
+            color: #e2e8f0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content {
+            flex: 1;
+            text-align: center;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 2px solid #e2e8f0;
+            border-radius: 50px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        body.light .theme-toggle {
+            color: #4a5568;
+            border-color: #e2e8f0;
+        }
+
+        body.light .theme-toggle:hover {
+            border-color: #cbd5e0;
+            background: #f7fafc;
+        }
+
+        body.dark .theme-toggle {
+            color: #e2e8f0;
+            border-color: #4a5568;
+        }
+
+        body.dark .theme-toggle:hover {
+            border-color: #718096;
+            background: #2d3748;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        body.light .header h1 {
+            color: #2d3748;
+        }
+
+        body.dark .header h1 {
+            color: #e2e8f0;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.7;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid;
+            transition: all 0.3s ease;
+        }
+
+        body.light .panel {
+            background: #ffffff;
+            border-color: #e2e8f0;
+        }
+
+        body.dark .panel {
+            background: #2d3748;
+            border-color: #4a5568;
+        }
+
+        .panel h2 {
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        body.light .panel h2 {
+            color: #2d3748;
+        }
+
+        body.dark .panel h2 {
+            color: #e2e8f0;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        body.light label {
+            color: #4a5568;
+        }
+
+        body.dark label {
+            color: #cbd5e0;
+        }
+
+        select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        body.light select,
+        body.light textarea {
+            background: #ffffff;
+            border-color: #e2e8f0;
+            color: #2d3748;
+        }
+
+        body.light select:focus,
+        body.light textarea:focus {
+            border-color: #4a5568;
+            box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.1);
+        }
+
+        body.dark select,
+        body.dark textarea {
+            background: #4a5568;
+            border-color: #718096;
+            color: #e2e8f0;
+        }
+
+        body.dark select:focus,
+        body.dark textarea:focus {
+            border-color: #cbd5e0;
+            box-shadow: 0 0 0 3px rgba(203, 213, 224, 0.1);
+        }
+
+        select:focus, textarea:focus {
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+            font-family: inherit;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Primary Button */
+        body.light .btn:not(.btn-secondary):not(.btn-danger):not(.btn-success) {
+            background: #4a5568;
+            color: #ffffff;
+        }
+
+        body.light .btn:not(.btn-secondary):not(.btn-danger):not(.btn-success):hover {
+            background: #2d3748;
+            transform: translateY(-1px);
+        }
+
+        body.dark .btn:not(.btn-secondary):not(.btn-danger):not(.btn-success) {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        body.dark .btn:not(.btn-secondary):not(.btn-danger):not(.btn-success):hover {
+            background: #cbd5e0;
+            transform: translateY(-1px);
+        }
+
+        /* Secondary Button */
+        .btn-secondary {
+            background: #ed8936;
+            color: #ffffff;
+        }
+
+        .btn-secondary:hover {
+            background: #dd6b20;
+            transform: translateY(-1px);
+        }
+
+        /* Danger Button */
+        .btn-danger {
+            background: #e53e3e;
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background: #c53030;
+            transform: translateY(-1px);
+        }
+
+        /* Success Button */
+        .btn-success {
+            background: #38a169;
+            color: #ffffff;
+        }
+
+        .btn-success:hover {
+            background: #2f855a;
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .output-section {
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        body.light .output-section {
+            background: #ffffff;
+            border-color: #e2e8f0;
+        }
+
+        body.dark .output-section {
+            background: #2d3748;
+            border-color: #4a5568;
+        }
+
+        .output-content {
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 150px;
+            border: 2px solid;
+            white-space: pre-wrap;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        body.light .output-content {
+            background: #f7fafc;
+            border-color: #e2e8f0;
+            color: #2d3748;
+        }
+
+        body.dark .output-content {
+            background: #4a5568;
+            border-color: #718096;
+            color: #e2e8f0;
+        }
+
+        .recording-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            color: #e53e3e;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .recording-indicator.active {
+            display: flex;
+        }
+
+        .pulse {
+            width: 12px;
+            height: 12px;
+            background: #e53e3e;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .language-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .language-option {
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        body.light .language-option {
+            background: #f7fafc;
+            border-color: #e2e8f0;
+            color: #2d3748;
+        }
+
+        body.light .language-option:hover {
+            border-color: #4a5568;
+            background: #edf2f7;
+        }
+
+        body.light .language-option.selected {
+            border-color: #4a5568;
+            background: #e6fffa;
+        }
+
+        body.dark .language-option {
+            background: #4a5568;
+            border-color: #718096;
+            color: #e2e8f0;
+        }
+
+        body.dark .language-option:hover {
+            border-color: #cbd5e0;
+            background: #718096;
+        }
+
+        body.dark .language-option.selected {
+            border-color: #cbd5e0;
+            background: #2a4365;
+        }
+
+        .transliteration-map {
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid;
+        }
+
+        body.light .transliteration-map {
+            background: #f7fafc;
+            border-color: #e2e8f0;
+            color: #2d3748;
+        }
+
+        body.dark .transliteration-map {
+            background: #4a5568;
+            border-color: #718096;
+            color: #e2e8f0;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border-left: 4px solid #e53e3e;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #2d7748;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border-left: 4px solid #38a169;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+        }
+
+        .pdf-preview {
+            border-radius: 8px;
+            padding: 40px;
+            margin-top: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid;
+        }
+
+        body.light .pdf-preview {
+            background: #ffffff;
+            border-color: #e2e8f0;
+            color: #2d3748;
+        }
+
+        body.dark .pdf-preview {
+            background: #2d3748;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        .pdf-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid;
+            padding-bottom: 15px;
+        }
+
+        body.light .pdf-header {
+            border-color: #4a5568;
+        }
+
+        body.dark .pdf-header {
+            border-color: #cbd5e0;
+        }
+
+        .pdf-content {
+            line-height: 1.8;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="width: 100px;"></div> <!-- Spacer for centering -->
+            <div class="header-content">
+                <h1>🎵 Multilingual Lyrics Converter</h1>
+                <p>Convert lyrics between languages with transliteration and speech recognition</p>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <span id="themeIcon">🌙</span>
+                <span id="themeText">Dark</span>
+            </button>
+        </div>
+
+        <div class="main-content">
+            <!-- Text Input Panel -->
+            <div class="panel">
+                <h2>📝 Text Input</h2>
+                
+                <div class="input-group">
+                    <label for="sourceLanguage">Source Language:</label>
+                    <select id="sourceLanguage">
+                        <option value="en">English</option>
+                        <option value="te">Telugu</option>
+                        <option value="hi">Hindi</option>
+                        <option value="ta">Tamil</option>
+                        <option value="ml">Malayalam</option>
+                        <option value="kn">Kannada</option>
+                        <option value="bn">Bengali</option>
+                        <option value="gu">Gujarati</option>
+                        <option value="mr">Marathi</option>
+                        <option value="pa">Punjabi</option>
+                        <option value="ur">Urdu</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="inputText">Enter your lyrics:</label>
+                    <textarea id="inputText" placeholder="Type your lyrics here..."></textarea>
+                </div>
+
+                <div class="controls">
+                    <button class="btn" onclick="convertText()">
+                        🔄 Convert
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearAll()">
+                        🗑️ Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Speech Recognition Panel -->
+            <div class="panel">
+                <h2>🎤 Speech Recognition</h2>
+                
+                <div class="input-group">
+                    <label for="speechLanguage">Recognition Language:</label>
+                    <select id="speechLanguage">
+                        <option value="en-US">English (US)</option>
+                        <option value="te-IN">Telugu</option>
+                        <option value="hi-IN">Hindi</option>
+                        <option value="ta-IN">Tamil</option>
+                        <option value="ml-IN">Malayalam</option>
+                        <option value="kn-IN">Kannada</option>
+                        <option value="bn-IN">Bengali</option>
+                        <option value="gu-IN">Gujarati</option>
+                        <option value="mr-IN">Marathi</option>
+                        <option value="pa-IN">Punjabi</option>
+                        <option value="ur-IN">Urdu</option>
+                    </select>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-success" onclick="startRecording()" id="recordBtn">
+                        🎤 Start Recording
+                    </button>
+                    <button class="btn btn-danger" onclick="stopRecording()" id="stopBtn" style="display: none;">
+                        ⏹️ Stop Recording
+                    </button>
+                </div>
+
+                <div class="recording-indicator" id="recordingIndicator">
+                    <div class="pulse"></div>
+                    Recording... Speak now!
+                </div>
+
+                <div id="speechResult" style="margin-top: 15px; padding: 10px; background: #f7fafc; border-radius: 8px; min-height: 50px;"></div>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div class="output-section">
+            <h2>🎯 Output</h2>
+            
+            <div class="input-group">
+                <label for="targetLanguage">Convert to:</label>
+                <select id="targetLanguage">
+                    <option value="en">English</option>
+                    <option value="te">Telugu (Transliterated)</option>
+                    <option value="hi">Hindi (Transliterated)</option>
+                    <option value="ta">Tamil (Transliterated)</option>
+                    <option value="ml">Malayalam (Transliterated)</option>
+                    <option value="kn">Kannada (Transliterated)</option>
+                    <option value="bn">Bengali (Transliterated)</option>
+                    <option value="gu">Gujarati (Transliterated)</option>
+                    <option value="mr">Marathi (Transliterated)</option>
+                    <option value="pa">Punjabi (Transliterated)</option>
+                    <option value="ur">Urdu (Transliterated)</option>
+                </select>
+            </div>
+
+            <div class="output-content" id="outputText">
+                Your converted lyrics will appear here...
+            </div>
+
+            <div class="controls">
+                <button class="btn" onclick="copyToClipboard()">
+                    📋 Copy
+                </button>
+                <button class="btn btn-secondary" onclick="generatePDF()">
+                    📄 Generate PDF
+                </button>
+                <button class="btn" onclick="downloadTXT()">
+                    💾 Download TXT
+                </button>
+            </div>
+
+            <div id="message"></div>
+        </div>
+
+        <!-- PDF Preview Section (Hidden by default) -->
+        <div id="pdfPreview" style="display: none;">
+            <div class="pdf-preview">
+                <div class="pdf-header">
+                    <h1>Multilingual Lyrics</h1>
+                    <p>Generated on <span id="pdfDate"></span></p>
+                </div>
+                <div class="pdf-content" id="pdfContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Transliteration mappings for different languages
+        const transliterationMaps = {
+            'te': {
+                'a': 'అ', 'aa': 'ఆ', 'i': 'ఇ', 'ii': 'ఈ', 'u': 'ఉ', 'uu': 'ఊ',
+                'ka': 'క', 'kha': 'ఖ', 'ga': 'గ', 'gha': 'ఘ', 'cha': 'చ', 'chha': 'ఛ',
+                'ja': 'జ', 'jha': 'ఝ', 'ta': 'త', 'tha': 'థ', 'da': 'ద', 'dha': 'ధ',
+                'na': 'న', 'pa': 'ప', 'pha': 'ఫ', 'ba': 'బ', 'bha': 'భ', 'ma': 'మ',
+                'ya': 'య', 'ra': 'ర', 'la': 'ల', 'va': 'వ', 'sa': 'స', 'ha': 'హ'
+            },
+            'hi': {
+                'a': 'अ', 'aa': 'आ', 'i': 'इ', 'ii': 'ई', 'u': 'उ', 'uu': 'ऊ',
+                'ka': 'क', 'kha': 'ख', 'ga': 'ग', 'gha': 'घ', 'cha': 'च', 'chha': 'छ',
+                'ja': 'ज', 'jha': 'झ', 'ta': 'त', 'tha': 'थ', 'da': 'द', 'dha': 'ध',
+                'na': 'न', 'pa': 'प', 'pha': 'फ', 'ba': 'ब', 'bha': 'भ', 'ma': 'म',
+                'ya': 'य', 'ra': 'र', 'la': 'ल', 'va': 'व', 'sa': 'स', 'ha': 'ह'
+            }
+        };
+
+        let recognition;
+        let isRecording = false;
+
+        // Initialize speech recognition
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                
+                recognition.onstart = function() {
+                    isRecording = true;
+                    document.getElementById('recordingIndicator').classList.add('active');
+                    document.getElementById('recordBtn').style.display = 'none';
+                    document.getElementById('stopBtn').style.display = 'inline-flex';
+                };
+
+                recognition.onresult = function(event) {
+                    let finalTranscript = '';
+                    let interimTranscript = '';
+
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+
+                    const speechResult = document.getElementById('speechResult');
+                    speechResult.innerHTML = finalTranscript + '<span style="color: #999;">' + interimTranscript + '</span>';
+                    
+                    if (finalTranscript) {
+                        document.getElementById('inputText').value = finalTranscript;
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    showMessage('Speech recognition error: ' + event.error, 'error');
+                    stopRecording();
+                };
+
+                recognition.onend = function() {
+                    stopRecording();
+                };
+            }
+        }
+
+        function startRecording() {
+            if (recognition) {
+                const language = document.getElementById('speechLanguage').value;
+                recognition.lang = language;
+                recognition.start();
+                showMessage('Started recording. Speak now!', 'success');
+            } else {
+                showMessage('Speech recognition not supported in this browser', 'error');
+            }
+        }
+
+        function stopRecording() {
+            if (recognition && isRecording) {
+                recognition.stop();
+            }
+            isRecording = false;
+            document.getElementById('recordingIndicator').classList.remove('active');
+            document.getElementById('recordBtn').style.display = 'inline-flex';
+            document.getElementById('stopBtn').style.display = 'none';
+        }
+
+        // Transliterate text based on target language
+        function transliterateText(text, targetLang) {
+            if (targetLang === 'en' || !text) return text;
+
+            // Simple transliteration - replace common syllables
+            let transliterated = text.toLowerCase();
+            
+            // Common transliterations for Indian languages
+            const commonMappings = {
+                'te': {
+                    'hello': 'హలో', 'how': 'ఎలా', 'are': 'ఉన్నావ', 'you': 'నువ్వు',
+                    'love': 'ప్రేమ', 'song': 'పాట', 'music': 'సంగీతం', 'dance': 'నృత్యం',
+                    'beautiful': 'అందమైన', 'heart': 'హృదయం', 'life': 'జీవితం',
+                    'family': 'కుటుంబం', 'friend': 'స్నేహితుడు', 'happy': 'సంతోషం'
+                },
+                'hi': {
+                    'hello': 'नमस्ते', 'how': 'कैसे', 'are': 'हैं', 'you': 'आप',
+                    'love': 'प्रेम', 'song': 'गाना', 'music': 'संगीत', 'dance': 'नृत्य',
+                    'beautiful': 'सुंदर', 'heart': 'दिल', 'life': 'जिंदगी',
+                    'family': 'परिवार', 'friend': 'दोस्त', 'happy': 'खुश'
+                }
+            };
+
+            // Apply word-level mappings
+            if (commonMappings[targetLang]) {
+                const words = transliterated.split(' ');
+                const transliteratedWords = words.map(word => {
+                    const cleanWord = word.replace(/[.,!?;]/g, '');
+                    return commonMappings[targetLang][cleanWord] || word;
+                });
+                transliterated = transliteratedWords.join(' ');
+            }
+
+            // Apply character-level transliteration for remaining text
+            if (transliterationMaps[targetLang]) {
+                const map = transliterationMaps[targetLang];
+                Object.keys(map).sort((a, b) => b.length - a.length).forEach(key => {
+                    const regex = new RegExp(key, 'gi');
+                    transliterated = transliterated.replace(regex, map[key]);
+                });
+            }
+
+            return transliterated;
+        }
+
+        function convertText() {
+            const inputText = document.getElementById('inputText').value.trim();
+            const targetLanguage = document.getElementById('targetLanguage').value;
+            
+            if (!inputText) {
+                showMessage('Please enter some text to convert', 'error');
+                return;
+            }
+
+            const outputElement = document.getElementById('outputText');
+            
+            if (targetLanguage === 'en') {
+                outputElement.textContent = inputText;
+            } else {
+                const transliterated = transliterateText(inputText, targetLanguage);
+                outputElement.textContent = transliterated;
+            }
+
+            showMessage('Text converted successfully!', 'success');
+        }
+
+        function clearAll() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('outputText').textContent = 'Your converted lyrics will appear here...';
+            document.getElementById('speechResult').innerHTML = '';
+            document.getElementById('message').innerHTML = '';
+        }
+
+        function copyToClipboard() {
+            const outputText = document.getElementById('outputText').textContent;
+            if (outputText && outputText !== 'Your converted lyrics will appear here...') {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    showMessage('Copied to clipboard!', 'success');
+                }).catch(() => {
+                    showMessage('Failed to copy to clipboard', 'error');
+                });
+            } else {
+                showMessage('No content to copy', 'error');
+            }
+        }
+
+        function downloadTXT() {
+            const outputText = document.getElementById('outputText').textContent;
+            if (outputText && outputText !== 'Your converted lyrics will appear here...') {
+                const blob = new Blob([outputText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'lyrics.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessage('TXT file downloaded!', 'success');
+            } else {
+                showMessage('No content to download', 'error');
+            }
+        }
+
+        function generatePDF() {
+            const outputText = document.getElementById('outputText').textContent;
+            if (outputText && outputText !== 'Your converted lyrics will appear here...') {
+                // Show PDF preview
+                document.getElementById('pdfDate').textContent = new Date().toLocaleDateString();
+                document.getElementById('pdfContent').textContent = outputText;
+                document.getElementById('pdfPreview').style.display = 'block';
+                
+                // Simulate PDF generation
+                setTimeout(() => {
+                    const pdfContent = `
+MULTILINGUAL LYRICS
+Generated on: ${new Date().toLocaleDateString()}
+==========================================
+
+${outputText}
+
+==========================================
+Generated by Multilingual Lyrics Converter
+                    `.trim();
+                    
+                    const blob = new Blob([pdfContent], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'lyrics.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    showMessage('PDF generated and downloaded!', 'success');
+                }, 1000);
+            } else {
+                showMessage('No content to generate PDF', 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageElement = document.getElementById('message');
+            messageElement.className = type === 'error' ? 'error-message' : 'success-message';
+            messageElement.textContent = text;
+            
+            setTimeout(() => {
+                messageElement.innerHTML = '';
+                messageElement.className = '';
+            }, 3000);
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial theme
+            document.body.classList.add('light');
+            
+            initSpeechRecognition();
+            
+            // Add event listeners for Enter key
+            document.getElementById('inputText').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    convertText();
+                }
+            });
+        });
+
+        // Theme toggle functionality
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+            
+            if (body.classList.contains('light')) {
+                body.classList.remove('light');
+                body.classList.add('dark');
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Light';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark');
+                body.classList.add('light');
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Dark';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Load saved theme on page load
+        window.addEventListener('load', function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+            
+            if (savedTheme === 'dark') {
+                body.classList.remove('light');
+                body.classList.add('dark');
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Light';
+            } else {
+                body.classList.add('light');
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Dark';
+            }
+        });
+
+        // Auto-convert when target language changes
+        document.getElementById('targetLanguage').addEventListener('change', function() {
+            const inputText = document.getElementById('inputText').value.trim();
+            if (inputText) {
+                convertText();
+            }
+        });
+    </script>
+</body>
+</html>
