@@ -1,4 +1,7 @@
-<!DOCTYPE html>
+function clearAll() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('outputText').textContent = 'Your converted lyrics will appear here...';
+            <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -574,6 +577,9 @@
                     <button class="btn btn-danger" onclick="stopRecording()" id="stopBtn" style="display: none;">
                         ⏹️ Stop Recording
                     </button>
+                    <button class="btn" onclick="clearSpeech()" style="margin-left: 10px;">
+                        🗑️ Clear Speech
+                    </button>
                 </div>
 
                 <div class="recording-indicator" id="recordingIndicator">
@@ -660,62 +666,102 @@
         let isRecording = false;
 
         // Initialize speech recognition
+        let allTranscript = '';
+
         function initSpeechRecognition() {
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 recognition = new SpeechRecognition();
                 recognition.continuous = true;
                 recognition.interimResults = true;
+                recognition.maxAlternatives = 3;
                 
                 recognition.onstart = function() {
                     isRecording = true;
+                    allTranscript = ''; // Reset transcript when starting new recording
                     document.getElementById('recordingIndicator').classList.add('active');
                     document.getElementById('recordBtn').style.display = 'none';
                     document.getElementById('stopBtn').style.display = 'inline-flex';
+                    showMessage('Listening... Speak clearly and at normal pace', 'success');
                 };
 
                 recognition.onresult = function(event) {
-                    let finalTranscript = '';
                     let interimTranscript = '';
 
                     for (let i = event.resultIndex; i < event.results.length; i++) {
                         const transcript = event.results[i][0].transcript;
                         if (event.results[i].isFinal) {
-                            finalTranscript += transcript;
+                            allTranscript += transcript + ' ';
                         } else {
                             interimTranscript += transcript;
                         }
                     }
 
                     const speechResult = document.getElementById('speechResult');
-                    speechResult.innerHTML = finalTranscript + '<span style="color: #999;">' + interimTranscript + '</span>';
+                    const currentText = allTranscript + '<span style="opacity: 0.6; font-style: italic;">' + interimTranscript + '</span>';
+                    speechResult.innerHTML = currentText;
                     
-                    if (finalTranscript) {
-                        document.getElementById('inputText').value = finalTranscript;
-                    }
+                    // Update input text with complete transcript
+                    document.getElementById('inputText').value = allTranscript + interimTranscript;
                 };
 
                 recognition.onerror = function(event) {
                     console.error('Speech recognition error:', event.error);
-                    showMessage('Speech recognition error: ' + event.error, 'error');
+                    let errorMsg = 'Speech recognition error: ';
+                    switch(event.error) {
+                        case 'no-speech':
+                            errorMsg += 'No speech detected. Please speak louder.';
+                            break;
+                        case 'audio-capture':
+                            errorMsg += 'Microphone not accessible. Please check permissions.';
+                            break;
+                        case 'not-allowed':
+                            errorMsg += 'Microphone access denied. Please enable microphone permissions.';
+                            break;
+                        default:
+                            errorMsg += event.error;
+                    }
+                    showMessage(errorMsg, 'error');
                     stopRecording();
                 };
 
                 recognition.onend = function() {
-                    stopRecording();
+                    if (isRecording) {
+                        // Auto-restart if still recording (for continuous listening)
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            stopRecording();
+                        }
+                    }
                 };
             }
         }
 
         function startRecording() {
-            if (recognition) {
-                const language = document.getElementById('speechLanguage').value;
-                recognition.lang = language;
-                recognition.start();
-                showMessage('Started recording. Speak now!', 'success');
-            } else {
-                showMessage('Speech recognition not supported in this browser', 'error');
+            if (!recognition) {
+                showMessage('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.', 'error');
+                return;
             }
+            
+            // Request microphone permission first
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(() => {
+                    const language = document.getElementById('speechLanguage').value;
+                    recognition.lang = language;
+                    
+                    // Configure for better accuracy
+                    recognition.continuous = true;
+                    recognition.interimResults = true;
+                    recognition.maxAlternatives = 1;
+                    
+                    allTranscript = ''; // Reset
+                    recognition.start();
+                })
+                .catch((error) => {
+                    showMessage('Microphone access denied. Please allow microphone access and try again.', 'error');
+                    console.error('Microphone error:', error);
+                });
         }
 
         function stopRecording() {
@@ -726,51 +772,68 @@
             document.getElementById('recordingIndicator').classList.remove('active');
             document.getElementById('recordBtn').style.display = 'inline-flex';
             document.getElementById('stopBtn').style.display = 'none';
+            
+            // Finalize the transcript
+            if (allTranscript.trim()) {
+                document.getElementById('inputText').value = allTranscript.trim();
+                document.getElementById('speechResult').innerHTML = allTranscript.trim();
+                showMessage('Recording completed! ' + allTranscript.split(' ').length + ' words captured.', 'success');
+            } else {
+                showMessage('No speech detected. Please try again.', 'error');
+            }
         }
 
-        // Transliterate text based on target language
+        // Enhanced transliterate function with better accuracy
         function transliterateText(text, targetLang) {
             if (targetLang === 'en' || !text) return text;
 
-            // Simple transliteration - replace common syllables
-            let transliterated = text.toLowerCase();
+            let transliterated = text;
             
-            // Common transliterations for Indian languages
-            const commonMappings = {
-                'te': {
-                    'hello': 'హలో', 'how': 'ఎలా', 'are': 'ఉన్నావ', 'you': 'నువ్వు',
-                    'love': 'ప్రేమ', 'song': 'పాట', 'music': 'సంగీతం', 'dance': 'నృత్యం',
-                    'beautiful': 'అందమైన', 'heart': 'హృదయం', 'life': 'జీవితం',
-                    'family': 'కుటుంబం', 'friend': 'స్నేహితుడు', 'happy': 'సంతోషం'
-                },
-                'hi': {
-                    'hello': 'नमस्ते', 'how': 'कैसे', 'are': 'हैं', 'you': 'आप',
-                    'love': 'प्रेम', 'song': 'गाना', 'music': 'संगीत', 'dance': 'नृत्य',
-                    'beautiful': 'सुंदर', 'heart': 'दिल', 'life': 'जिंदगी',
-                    'family': 'परिवार', 'friend': 'दोस्त', 'happy': 'खुश'
-                }
-            };
-
-            // Apply word-level mappings
-            if (commonMappings[targetLang]) {
-                const words = transliterated.split(' ');
-                const transliteratedWords = words.map(word => {
-                    const cleanWord = word.replace(/[.,!?;]/g, '');
-                    return commonMappings[targetLang][cleanWord] || word;
-                });
-                transliterated = transliteratedWords.join(' ');
+            // First, apply word-level mappings for better accuracy
+            if (wordMappings[targetLang]) {
+                const words = text.split(/(\s+|[.,!?;:"'-])/); // Split keeping delimiters
+                transliterated = words.map(word => {
+                    const cleanWord = word.toLowerCase().trim();
+                    if (wordMappings[targetLang][cleanWord]) {
+                        return wordMappings[targetLang][cleanWord];
+                    }
+                    return word;
+                }).join('');
             }
 
-            // Apply character-level transliteration for remaining text
+            // Then apply phonetic transliteration for remaining English text
             if (transliterationMaps[targetLang]) {
                 const map = transliterationMaps[targetLang];
+                
+                // Convert common English phonetic patterns
+                let phoneticText = transliterated.toLowerCase();
+                
+                // Handle common English to Indian language phonetic conversions
+                const phoneticMappings = {
+                    'th': targetLang === 'te' ? 'థ' : targetLang === 'hi' ? 'थ' : 'th',
+                    'dh': targetLang === 'te' ? 'ధ' : targetLang === 'hi' ? 'ध' : 'dh',
+                    'ch': targetLang === 'te' ? 'చ' : targetLang === 'hi' ? 'च' : 'ch',
+                    'sh': targetLang === 'te' ? 'శ' : targetLang === 'hi' ? 'श' : 'sh',
+                    'ng': targetLang === 'te' ? 'ంగ' : targetLang === 'hi' ? 'ंग' : 'ng',
+                    'nk': targetLang === 'te' ? 'ంక' : targetLang === 'hi' ? 'ंक' : 'nk'
+                };
+                
+                Object.keys(phoneticMappings).forEach(pattern => {
+                    const regex = new RegExp(pattern, 'gi');
+                    phoneticText = phoneticText.replace(regex, phoneticMappings[pattern]);
+                });
+                
+                // Apply individual character mappings
                 Object.keys(map).sort((a, b) => b.length - a.length).forEach(key => {
                     const regex = new RegExp(key, 'gi');
-                    transliterated = transliterated.replace(regex, map[key]);
+                    phoneticText = phoneticText.replace(regex, map[key]);
                 });
+                
+                transliterated = phoneticText;
             }
 
-            return transliterated;
+            // Handle mixed script properly
+            return transliterated.replace(/\s+/g, ' ').trim();
         }
 
         function convertText() {
@@ -799,6 +862,13 @@
             document.getElementById('outputText').textContent = 'Your converted lyrics will appear here...';
             document.getElementById('speechResult').innerHTML = '';
             document.getElementById('message').innerHTML = '';
+            allTranscript = '';
+        }
+
+        function clearSpeech() {
+            document.getElementById('speechResult').innerHTML = '';
+            allTranscript = '';
+            showMessage('Speech text cleared', 'success');
         }
 
         function copyToClipboard() {
